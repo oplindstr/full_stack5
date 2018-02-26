@@ -6,4 +6,8 @@ const getAll = () => {
   return request.then(response => response.data)
 }
 
-export default { getAll}
+const setToken = (newToken) => {
+  token = `bearer ${newToken}`
+}
+
+export default { getAll, setToken}
