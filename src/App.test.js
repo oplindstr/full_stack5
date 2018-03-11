@@ -1,18 +1,17 @@
 import React from 'react'
 import { mount } from 'enzyme'
 import App from './App'
-import Blog from './components/Blog'
 jest.mock('./services/blogs')
 import blogService from './services/blogs'
 
 describe('<App />', () => {
     let app
-  
+
     describe('when user is not logged', () => {
       beforeEach(() => {
         app = mount(<App />)
       })
-  
+
       it('no blogs are rendered', () => {
         app.update()
 
@@ -26,7 +25,7 @@ describe('<App />', () => {
         })
       })
     })
-  
+
     describe('when user is logged', () => {
       beforeEach(() => {
         const user = {
@@ -34,12 +33,12 @@ describe('<App />', () => {
             token: '3115352',
             name: 'Teuvo Testaaja'
           }
-          
+
           localStorage.setItem('loggedInUser', JSON.stringify(user))
 
           app = mount(<App />)
       })
-  
+
       it('all notes are rendered', () => {
         app.update()
 

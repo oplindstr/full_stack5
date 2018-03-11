@@ -3,21 +3,13 @@ import PropTypes from 'prop-types'
 
 const BlogDetails = ({ addLike, destroy, id, title, author, url, likes, username, loggedInUser }) => {
 
-    const blogStyle = {
-        paddingTop: 10,
-        paddingLeft: 2,
-        border: 'solid',
-        borderWidth: 1,
-        marginBottom: 5
-      }
-
       if (username && loggedInUser && username === loggedInUser.username) {
         return (
-            <div style={blogStyle} className="blogContent">
-                <p>{author}: {title}</p>
+            <div className="blogContent">
+                <h2>{author}: {title}</h2>
                 <p>{url}</p>
                 <p>
-                    {likes} likes 
+                    {likes} likes
                     <button onClick={addLike(id)}>Like</button>
                 </p>
                 <button onClick={destroy(id, title)}>Delete</button>
@@ -28,11 +20,11 @@ const BlogDetails = ({ addLike, destroy, id, title, author, url, likes, username
 
     if (!username && loggedInUser) {
         return (
-            <div style={blogStyle} className="blogContent">
-                <p>{author}: {title}</p>
+            <div className="blogContent">
+                <h2>{author}: {title}</h2>
                 <p>{url}</p>
                 <p>
-                    {likes} likes 
+                    {likes} likes
                     <button onClick={addLike(id)}>Like</button>
                 </p>
                 <button onClick={destroy(id, title)}>Delete</button>
@@ -42,11 +34,11 @@ const BlogDetails = ({ addLike, destroy, id, title, author, url, likes, username
 
     if (username) {
         return (
-            <div style={blogStyle} className="blogContent">
-                <p>{author}: {title}</p>
+            <div className="blogContent">
+                <h2>{author}: {title}</h2>
                 <p>{url}</p>
                 <p>
-                    {likes} likes 
+                    {likes} likes
                     <button onClick={addLike(id)}>Like</button>
                 </p>
                 <p>Added by {username}</p>
@@ -55,11 +47,11 @@ const BlogDetails = ({ addLike, destroy, id, title, author, url, likes, username
     }
 
     return (
-        <div style={blogStyle} className="blogContent">
-            <p>{author}: {title}</p>
+        <div className="blogContent">
+            <h2>{author}: {title}</h2>
             <p>{url}</p>
             <p>
-                {likes} likes 
+                {likes} likes
                 <button onClick={addLike(id)}>Like</button>
             </p>
         </div>
@@ -68,8 +60,7 @@ const BlogDetails = ({ addLike, destroy, id, title, author, url, likes, username
 
 BlogDetails.propTypes = {
     addLike: PropTypes.func.isRequired,
-    destroy: PropTypes.func.isRequired,
-    id: PropTypes.string.isRequired
+    destroy: PropTypes.func.isRequired
   }
 
 

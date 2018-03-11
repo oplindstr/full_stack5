@@ -1,5 +1,5 @@
 import axios from 'axios'
-const baseUrl = '/api/blogs'
+const baseUrl = '/api/users'
 
 let token = null
 
@@ -38,8 +38,4 @@ const destroy = (id) => {
   return axios.delete(`${baseUrl}/${id}`, config)
 }
 
-const addComment = (id, comment) => {
-  return axios.post(`${baseUrl}/${id}/comments/`, { comment } )
-}
-
-export default { getAll, create, get, update, destroy, setToken, addComment }
+export default { getAll, create, get, update, destroy, setToken }

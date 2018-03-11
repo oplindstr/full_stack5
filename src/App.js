@@ -1,12 +1,16 @@
 import React from 'react'
 
 import Blog from './components/Blog'
+/*import User from './components/User'*/
 import Togglable from './components/Togglable'
 import LoginForm from './components/LoginForm'
 import BlogForm from './components/BlogForm'
 
 import blogService from './services/blogs'
 import loginService from './services/logins'
+import userService from './services/users'
+
+import { BrowserRouter as Router, Route, Link } from 'react-router-dom'
 
 import './index.css'
 
@@ -15,13 +19,14 @@ class App extends React.Component {
     super(props)
     this.state = {
       blogs: [],
+      users: [],
       newBlog: '',
       showAll: true,
       error: null,
       success: null,
       username: '',
       password: '',
-      user: null,
+      loggedInUser: null,
       author: '',
       title: '',
       url: '',
@@ -31,18 +36,24 @@ class App extends React.Component {
 
   componentDidMount() {
     blogService.getAll().then(blogs =>
-      this.setState({ 
+      this.setState({
         blogs: blogs.sort(function (a, b) {
-          return b.likes - a.likes;
-        }) 
+          return b.likes - a.likes
+        })
+      })
+    )
+
+    userService.getAll().then(users =>
+      this.setState({
+        users: users
       })
     )
 
     const loggedUserJSON = window.localStorage.getItem('loggedInUser')
     if (loggedUserJSON) {
-      const user = JSON.parse(loggedUserJSON)
-      this.setState({user})
-      blogService.setToken(user.token)
+      const loggedInUser = JSON.parse(loggedUserJSON)
+      this.setState({ loggedInUser })
+      blogService.setToken(loggedInUser.token)
     }
   }
 
@@ -66,69 +77,43 @@ class App extends React.Component {
         })
       })
       setTimeout(() => {
-        this.setState({success: null})
+        this.setState({ success: null })
       }, 5000)
   }
 
   deleteBlog = (id, name) => {
     return () => {
-      if (window.confirm(`Are you sure you want to delete blog ${name}?`)) { 
+      if (window.confirm(`Are you sure you want to delete blog ${name}?`)) {
         blogService
         .destroy(id)
-        .then(response => {
+        .then(() => {
           this.setState({
             blogs: this.state.blogs.filter(blog => blog.id !== id),
             success: `blog ${name} deleted`
           })
           setTimeout(() => {
-            this.setState({message: null})
+            this.setState({ message: null })
           }, 5000)
         })
       }
     }
   }
 
-  addLike = (id) => {
-    return () => {
-      blogService.get(id)
-      .then(blog => {
-
-        const changedBlog = { ...blog, likes: blog.likes + 1 }
-
-        blogService
-      .update(id, changedBlog)
-        .then(response => {
-          this.setState({
-            blogs: this.state.blogs.map(blog => blog.id === id ? changedBlog : blog ),
-            success: `Blog '${blog.title}' by '${blog.author}' liked`
-          })
-        })
-        setTimeout(() => {
-          this.setState({success: null})
-        }, 5000)
-      })
-    }
-  }
-
-  toggleImportanceOf = (id) => {
-    // ...
-  }
-
   login = async (event) => {
     event.preventDefault()
     try{
-      const user = await loginService.login({
+      const loggedInUser = await loginService.login({
         username: this.state.username,
         password: this.state.password
       })
 
-      window.localStorage.setItem('loggedInUser', JSON.stringify(user))
-      blogService.setToken(user.token)
+      window.localStorage.setItem('loggedInUser', JSON.stringify(loggedInUser))
+      blogService.setToken(loggedInUser.token)
 
-      this.setState({ username: '', password: '', user: user, success: 'login successful'})
+      this.setState({ username: '', password: '', loggedInUser: loggedInUser, success: 'login successful' })
 
       setTimeout(() => {
-        this.setState({success: null})
+        this.setState({ success: null })
       }, 5000)
     } catch(exception) {
       this.setState({
@@ -143,10 +128,10 @@ class App extends React.Component {
   logout = (event) => {
     event.preventDefault()
     window.localStorage.removeItem('loggedInUser')
-    this.setState({ user: null, success: 'logout successful' })
+    this.setState({ loggedInUser: null, success: 'logout successful' })
 
     setTimeout(() => {
-      this.setState({success: null})
+      this.setState({ success: null })
     }, 5000)
   }
 
@@ -197,36 +182,63 @@ class App extends React.Component {
     }
 
     const allBlogs = this.state.blogs.map((blog) =>
-    <Blog key={blog.id}
-          blog={blog}
-          addLike={this.addLike}
-          destroy={this.deleteBlog}
-          loggedInUser={this.state.user} />
+      <p key={blog.id}><Link to={`/blogs/${blog.id}`}>{blog.title}</Link></p>
+    )
+
+    const allUsers = this.state.users.map((user) =>
+      <tr key={user.id}>
+        <td><Link to={`/users/${user.id}`}>{user.name}</Link> </td>
+        <td>{this.state.blogs.filter((blog) => blog.user ? blog.user._id === user.id : false).length} </td>
+      </tr>
+    )
+
+    const User = ({ user }) => {
+      if (!user) {
+        return null
+      }
+      const addedBlogs = this.state.blogs.filter((blog) => blog.user ? blog.user._id === user.id : false)
+      return (
+        <div>
+            <h2>{user.name}</h2>
+            <h3>Added blogs</h3>
+            <ul>
+            {addedBlogs.map((blog) =>
+                <li key={blog.id}>{blog.name} by {blog.author}</li>
+            )}
+            </ul>
+        </div>
       )
+    }
 
-      const Errornotification = ({ message }) => {
-        if (message === null) {
-          return null
-        }
-        return (
-          <div className="error">
-            {message}
-          </div>
-        )
+    const Errornotification = ({ message }) => {
+      if (message === null) {
+        return null
       }
+      return (
+        <div className="error">
+          {message}
+        </div>
+      )
+    }
 
-      const Successnotification = ({ message }) => {
-        if (message === null) {
-          return null
-        }
-        return (
-          <div className="success">
-            {message}
-          </div>
-        )
+    const Successnotification = ({ message }) => {
+      if (message === null) {
+        return null
       }
+      return (
+        <div className="success">
+          {message}
+        </div>
+      )
+    }
 
-      const user = this.state.user
+    const loggedInUser = this.state.loggedInUser
+
+    const userById = (id) =>
+      this.state.users.find(user => user.id === id)
+
+    const blogById = (id) =>
+      this.state.blogs.find(blog => blog.id === id)
 
     return (
       <div>
@@ -234,26 +246,67 @@ class App extends React.Component {
         <Errornotification message={this.state.error}/>
         <Successnotification message={this.state.success}/>
 
-        {user === null ?
-          loginForm() :
-          <div>
-            <p>{user.name} logged in</p>
+        <Router>
 
-            <form onSubmit={this.logout}>
-              <button type="submit">Log out</button>
-            </form>
+          {loggedInUser === null ?
+            loginForm() :
+            <div>
+              <p>{loggedInUser.name} logged in</p>
 
-            {blogForm()}
+              <form onSubmit={this.logout}>
+                <button type="submit">Log out</button>
+              </form>
 
-            <h2>Blogs</h2>
+              <br/>
 
-            {allBlogs}
-          </div>
-        }
+              <Link to={'/users'}>Users</Link> / <Link to={'/'}>blogs</Link>
+
+              <br/>
+              <br/>
+
+              <Route exact path="/" render={() =>
+                <div>
+                  {blogForm()}
+                  <h2>Blogs</h2>
+                  {allBlogs}
+                </div>
+                }
+              />
+
+              <Route exact path="/users" render={() =>
+                <div>
+                  <h2>Users</h2>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>Blogs added</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {allUsers}
+                    </tbody>
+                  </table>
+                </div>
+                }
+              />
+
+              <Route exact path="/users/:id" render={({ match }) =>
+                <User user={userById(match.params.id)} blogs={this.state.blogs} />
+              }/>
+
+              <Route exact path="/blogs/:id" render={({ match }) =>
+                <Blog blog={blogById(match.params.id)} addLike={this.addLike}
+                destroy={this.deleteBlog}
+                loggedInUser={this.state.loggedInUser} />
+              }/>
+            </div>
+          }
+        </Router>
 
       </div >
     )
   }
 }
 
-export default App;
+export default App
